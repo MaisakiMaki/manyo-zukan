@@ -70,7 +70,7 @@ export default function Home() {
     <div className="flex flex-col flex-1">
       {!(activeTab === 'home' && isInGarden) && <Header />}
 
-      <main className="flex-1 overflow-y-auto">
+      <main className="flex-1 overflow-y-auto pb-20">
         {activeTab === 'home' && (
           isInGarden ? <GardenMode /> : <HomeContent plants={plants} loading={loading} />
         )}

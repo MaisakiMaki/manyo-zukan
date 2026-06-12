@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Noto_Sans_JP, Shippori_Mincho } from "next/font/google";
 import "./globals.css";
 import AuthProvider from "@/components/AuthProvider";
@@ -19,6 +19,12 @@ const shipporiMincho = Shippori_Mincho({
 export const metadata: Metadata = {
   title: "万葉植物図鑑",
   description: "植物と一緒に同じ月日を過ごすアプリ",
+};
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,
 };
 
 export default function RootLayout({

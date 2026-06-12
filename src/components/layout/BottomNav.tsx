@@ -23,12 +23,16 @@ export default function BottomNav() {
 
   return (
     <nav
-      className="flex border-t transition-colors duration-300"
-      style={
-        isInGarden
+      className="fixed bottom-0 z-40 flex border-t transition-colors duration-300"
+      style={{
+        left: '50%',
+        transform: 'translateX(-50%)',
+        width: '100%',
+        maxWidth: '430px',
+        ...(isInGarden
           ? { background: '#050a02', borderColor: 'rgba(255,255,255,0.05)' }
-          : { background: '#ffffff', borderColor: '#ddeec0' }
-      }
+          : { background: '#ffffff', borderColor: '#ddeec0' }),
+      }}
     >
       {navItems.map((item) => {
         const isActive = activeTab === item.id;
