@@ -19,6 +19,22 @@ const COLOR_OPTIONS = [
 const SMELL_OPTIONS = ['甘い香り', '草っぽい', '無臭'];
 const TEXTURE_OPTIONS = ['つるつる', 'ざらざら', 'ふわふわ', 'かたい'];
 
+const GARDEN_LAT = 35.6097354;
+const GARDEN_LNG = 139.5566718;
+const GARDEN_RADIUS_M = 200;
+
+function calcDistance(lat1: number, lng1: number, lat2: number, lng2: number): number {
+  const R = 6371000;
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLng = ((lng2 - lng1) * Math.PI) / 180;
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos((lat1 * Math.PI) / 180) *
+    Math.cos((lat2 * Math.PI) / 180) *
+    Math.sin(dLng / 2) ** 2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
 export default function RegisterModal() {
   const activeModal = useAppStore((s) => s.activeModal);
   const closeModal = useAppStore((s) => s.closeModal);
@@ -52,19 +68,35 @@ export default function RegisterModal() {
     return saved ? JSON.parse(saved) : [];
   });
   const [location, setLocation] = useState<{ lat: number; lng: number } | null>(null);
+  const [locationFailed, setLocationFailed] = useState(false);
 
   useEffect(() => {
     if (!isOpen) return;
     if (!useLocation) return;
     if (!navigator.geolocation) return;
 
+    setLocation(null);
+    setLocationFailed(false);
+
     navigator.geolocation.getCurrentPosition(
       (pos) => {
-        setLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+        const dist = calcDistance(
+          pos.coords.latitude,
+          pos.coords.longitude,
+          GARDEN_LAT,
+          GARDEN_LNG
+        );
+        if (dist <= GARDEN_RADIUS_M) {
+          setLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+        } else {
+          setLocation(null);
+          setLocationFailed(false);
+        }
       },
       (err) => {
         console.warn('位置情報取得失敗:', err);
         setLocation(null);
+        setLocationFailed(true);
       },
       { enableHighAccuracy: true, timeout: 10000 }
     );
@@ -97,6 +129,7 @@ export default function RegisterModal() {
     setAddingTexture(false);
     setNewTexture('');
     setLocation(null);
+    setLocationFailed(false);
     closeModal();
   }
 
@@ -437,8 +470,10 @@ export default function RegisterModal() {
         {useLocation && (
           <p className="text-xs text-[#8aaa58] -mt-3">
             {location
-              ? `📍 取得済み (${location.lat.toFixed(4)}, ${location.lng.toFixed(4)})`
-              : '📍 取得中...'}
+              ? '📍 取得済み（万葉植物園エリア）'
+              : locationFailed
+                ? '📍 取得できませんでした'
+                : '📍 取得中...'}
           </p>
         )}
 
