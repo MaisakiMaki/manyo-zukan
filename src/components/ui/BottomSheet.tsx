@@ -116,13 +116,23 @@ export default function BottomSheet({ isOpen, onClose, children }: Props) {
       >
         {/* ハンドルバー */}
         <div
-          className="flex justify-center pt-3 pb-1 cursor-grab touch-none select-none"
+          className="flex justify-center pt-3 pb-4 cursor-grab touch-none select-none"
+          style={{ paddingBottom: '16px', marginBottom: '-8px' }}
           onPointerDown={handlePointerDown}
           onPointerMove={handlePointerMove}
           onPointerUp={handlePointerUp}
         >
           <div className="w-10 h-1 rounded-full bg-[#ddeec0]" />
         </div>
+
+        {/* 上部タッチエリア（透明、スワイプ用） */}
+        <div
+          className="absolute top-0 left-0 right-0 touch-none"
+          style={{ height: '30px', zIndex: 10 }}
+          onPointerDown={handlePointerDown}
+          onPointerMove={handlePointerMove}
+          onPointerUp={handlePointerUp}
+        />
 
         {children}
       </div>
