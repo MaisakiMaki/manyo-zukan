@@ -22,7 +22,7 @@ function groupByDate(plants: Plant[]): { date: string; plants: Plant[] }[] {
   );
   const map = new Map<string, Plant[]>();
   for (const plant of sorted) {
-    const key = plant.createdAt;
+    const key = new Date(plant.createdAt).toISOString().slice(0, 10);
     if (!map.has(key)) map.set(key, []);
     map.get(key)!.push(plant);
   }

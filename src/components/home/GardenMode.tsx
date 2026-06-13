@@ -2,16 +2,8 @@
 
 import Image from 'next/image';
 import { useAppStore } from '@/store/appStore';
-import { dummyPlants, dummyObservations } from '@/lib/dummyData';
-import { ObservationRecord } from '@/types';
-
-// 植物ごとの最新観察記録を取得
-function getLatestObs(plantId: string): ObservationRecord | null {
-  const obs = dummyObservations
-    .filter((o) => o.plantId === plantId)
-    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-  return obs[0] ?? null;
-}
+import { usePlants } from '@/hooks/usePlants';
+import { useObservationsAll } from '@/hooks/useObservationsAll';
 
 function formatDate(dateStr: string): string {
   const date = new Date(dateStr);
@@ -23,9 +15,19 @@ function formatDate(dateStr: string): string {
 
 export default function GardenMode() {
   const openModal = useAppStore((s) => s.openModal);
+  const { plants } = usePlants();
 
-  const oshiPlant = dummyPlants.find((p) => p.isOshi) ?? null;
-  const otherPlants = dummyPlants.filter((p) => !p.isOshi);
+  const plantIds = plants.map((p) => p.id);
+  const { observations } = useObservationsAll(plantIds);
+
+  function getLatestObs(plantId: string) {
+    return observations
+      .filter((o) => o.plantId === plantId)
+      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())[0] ?? null;
+  }
+
+  const oshiPlant = plants.find((p) => p.isOshi) ?? null;
+  const otherPlants = plants.filter((p) => !p.isOshi);
 
   const oshiObs = oshiPlant ? getLatestObs(oshiPlant.id) : null;
   const oshiImageUrl = oshiObs?.imageUrl ?? oshiPlant?.mainImageUrl ?? null;
@@ -90,7 +92,7 @@ export default function GardenMode() {
           {otherPlants.map((plant) => {
             const obs = getLatestObs(plant.id);
             const imageUrl = obs?.imageUrl ?? plant.mainImageUrl;
-            const isInvestigating = plant.name === null;
+            const isInvestigating = plant.name === null && plant.nickname === null;
             const filterStyle = isInvestigating
               ? 'saturate(0.3) brightness(0.6)'
               : 'saturate(0.68) brightness(0.78)';

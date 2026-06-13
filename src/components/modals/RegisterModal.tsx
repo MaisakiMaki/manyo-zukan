@@ -37,6 +37,20 @@ export default function RegisterModal() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [addingSmell, setAddingSmell] = useState(false);
+  const [newSmell, setNewSmell] = useState('');
+  const [customSmells, setCustomSmells] = useState<string[]>(() => {
+    if (typeof window === 'undefined') return [];
+    const saved = localStorage.getItem('customSmells');
+    return saved ? JSON.parse(saved) : [];
+  });
+  const [addingTexture, setAddingTexture] = useState(false);
+  const [newTexture, setNewTexture] = useState('');
+  const [customTextures, setCustomTextures] = useState<string[]>(() => {
+    if (typeof window === 'undefined') return [];
+    const saved = localStorage.getItem('customTextures');
+    return saved ? JSON.parse(saved) : [];
+  });
 
   function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -60,6 +74,10 @@ export default function RegisterModal() {
     setLoading(false);
     setSelectedFile(null);
     setPreviewUrl(null);
+    setAddingSmell(false);
+    setNewSmell('');
+    setAddingTexture(false);
+    setNewTexture('');
     closeModal();
   }
 
@@ -109,6 +127,9 @@ export default function RegisterModal() {
     closeModal();
     window.location.reload();
   }
+
+  const allSmells = [...new Set([...SMELL_OPTIONS, ...customSmells])];
+  const allTextures = [...new Set([...TEXTURE_OPTIONS, ...customTextures])];
 
   return (
     <BottomSheet isOpen={isOpen} onClose={handleClose}>
@@ -187,25 +208,89 @@ export default function RegisterModal() {
         <div className="space-y-2">
           <label className="text-[#1e3a0e] text-xs font-semibold">匂い</label>
           <div className="flex flex-wrap gap-2">
-            {SMELL_OPTIONS.map((smell) => {
+            {allSmells.map((smell) => {
               const isSelected = selectedSmells.includes(smell);
+              const isCustom = !SMELL_OPTIONS.includes(smell);
               return (
-                <button
-                  key={smell}
-                  onClick={() => setSelectedSmells(toggleChip(selectedSmells, smell))}
-                  className={`text-xs px-3 py-1.5 rounded-full border transition-colors ${
-                    isSelected
-                      ? 'bg-[#e8f4cc] border-[#4a8820] text-[#2d5016] font-medium'
-                      : 'bg-white border-[#ddeec0] text-[#8aaa58]'
-                  }`}
-                >
-                  {smell}
-                </button>
+                <div key={smell} className="flex items-center">
+                  <button
+                    onClick={() => setSelectedSmells(toggleChip(selectedSmells, smell))}
+                    className={`text-xs px-3 py-1.5 rounded-full border transition-colors ${
+                      isCustom ? 'rounded-r-none border-r-0' : ''
+                    } ${
+                      isSelected
+                        ? 'bg-[#e8f4cc] border-[#4a8820] text-[#2d5016] font-medium'
+                        : 'bg-white border-[#ddeec0] text-[#8aaa58]'
+                    }`}
+                  >
+                    {smell}
+                  </button>
+                  {isCustom && (
+                    <button
+                      onClick={() => {
+                        const updated = customSmells.filter(s => s !== smell);
+                        setCustomSmells(updated);
+                        localStorage.setItem('customSmells', JSON.stringify(updated));
+                        setSelectedSmells(prev => prev.filter(s => s !== smell));
+                      }}
+                      className={`text-xs px-1.5 py-1.5 rounded-r-full border border-l-0 ${
+                        isSelected
+                          ? 'bg-[#e8f4cc] border-[#4a8820] text-[#2d5016]'
+                          : 'bg-white border-[#ddeec0] text-[#8aaa58]'
+                      }`}
+                    >
+                      ×
+                    </button>
+                  )}
+                </div>
               );
             })}
-            <button className="text-xs px-3 py-1.5 rounded-full border border-dashed border-[#ddeec0] text-[#8aaa58]">
-              ＋ 追加
-            </button>
+            {addingSmell ? (
+              <div className="flex gap-2 mt-1">
+                <input
+                  type="text"
+                  value={newSmell}
+                  onChange={(e) => setNewSmell(e.target.value)}
+                  placeholder="例：土っぽい"
+                  className="flex-1 border border-[#ddeec0] rounded-full px-3 py-1 text-xs outline-none focus:border-[#4a8820]"
+                  autoFocus
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && newSmell.trim()) {
+                      const v = newSmell.trim();
+                      const updated = [...customSmells, v];
+                      setCustomSmells(updated);
+                      localStorage.setItem('customSmells', JSON.stringify(updated));
+                      setSelectedSmells(prev => [...prev, v]);
+                      setNewSmell('');
+                      setAddingSmell(false);
+                    }
+                  }}
+                />
+                <button
+                  onClick={() => {
+                    if (newSmell.trim()) {
+                      const v = newSmell.trim();
+                      const updated = [...customSmells, v];
+                      setCustomSmells(updated);
+                      localStorage.setItem('customSmells', JSON.stringify(updated));
+                      setSelectedSmells(prev => [...prev, v]);
+                      setNewSmell('');
+                    }
+                    setAddingSmell(false);
+                  }}
+                  className="text-xs text-[#2d5016] border border-[#2d5016] px-3 py-1 rounded-full"
+                >
+                  追加
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={() => setAddingSmell(true)}
+                className="text-xs text-[#8aaa58] border border-dashed border-[#8aaa58] px-3 py-1 rounded-full"
+              >
+                ＋ 追加
+              </button>
+            )}
           </div>
         </div>
 
@@ -213,25 +298,89 @@ export default function RegisterModal() {
         <div className="space-y-2">
           <label className="text-[#1e3a0e] text-xs font-semibold">手触り</label>
           <div className="flex flex-wrap gap-2">
-            {TEXTURE_OPTIONS.map((texture) => {
+            {allTextures.map((texture) => {
               const isSelected = selectedTextures.includes(texture);
+              const isCustom = !TEXTURE_OPTIONS.includes(texture);
               return (
-                <button
-                  key={texture}
-                  onClick={() => setSelectedTextures(toggleChip(selectedTextures, texture))}
-                  className={`text-xs px-3 py-1.5 rounded-full border transition-colors ${
-                    isSelected
-                      ? 'bg-[#e8f4cc] border-[#4a8820] text-[#2d5016] font-medium'
-                      : 'bg-white border-[#ddeec0] text-[#8aaa58]'
-                  }`}
-                >
-                  {texture}
-                </button>
+                <div key={texture} className="flex items-center">
+                  <button
+                    onClick={() => setSelectedTextures(toggleChip(selectedTextures, texture))}
+                    className={`text-xs px-3 py-1.5 rounded-full border transition-colors ${
+                      isCustom ? 'rounded-r-none border-r-0' : ''
+                    } ${
+                      isSelected
+                        ? 'bg-[#e8f4cc] border-[#4a8820] text-[#2d5016] font-medium'
+                        : 'bg-white border-[#ddeec0] text-[#8aaa58]'
+                    }`}
+                  >
+                    {texture}
+                  </button>
+                  {isCustom && (
+                    <button
+                      onClick={() => {
+                        const updated = customTextures.filter(t => t !== texture);
+                        setCustomTextures(updated);
+                        localStorage.setItem('customTextures', JSON.stringify(updated));
+                        setSelectedTextures(prev => prev.filter(t => t !== texture));
+                      }}
+                      className={`text-xs px-1.5 py-1.5 rounded-r-full border border-l-0 ${
+                        isSelected
+                          ? 'bg-[#e8f4cc] border-[#4a8820] text-[#2d5016]'
+                          : 'bg-white border-[#ddeec0] text-[#8aaa58]'
+                      }`}
+                    >
+                      ×
+                    </button>
+                  )}
+                </div>
               );
             })}
-            <button className="text-xs px-3 py-1.5 rounded-full border border-dashed border-[#ddeec0] text-[#8aaa58]">
-              ＋ 追加
-            </button>
+            {addingTexture ? (
+              <div className="flex gap-2 mt-1">
+                <input
+                  type="text"
+                  value={newTexture}
+                  onChange={(e) => setNewTexture(e.target.value)}
+                  placeholder="例：ねばねば"
+                  className="flex-1 border border-[#ddeec0] rounded-full px-3 py-1 text-xs outline-none focus:border-[#4a8820]"
+                  autoFocus
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && newTexture.trim()) {
+                      const v = newTexture.trim();
+                      const updated = [...customTextures, v];
+                      setCustomTextures(updated);
+                      localStorage.setItem('customTextures', JSON.stringify(updated));
+                      setSelectedTextures(prev => [...prev, v]);
+                      setNewTexture('');
+                      setAddingTexture(false);
+                    }
+                  }}
+                />
+                <button
+                  onClick={() => {
+                    if (newTexture.trim()) {
+                      const v = newTexture.trim();
+                      const updated = [...customTextures, v];
+                      setCustomTextures(updated);
+                      localStorage.setItem('customTextures', JSON.stringify(updated));
+                      setSelectedTextures(prev => [...prev, v]);
+                      setNewTexture('');
+                    }
+                    setAddingTexture(false);
+                  }}
+                  className="text-xs text-[#2d5016] border border-[#2d5016] px-3 py-1 rounded-full"
+                >
+                  追加
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={() => setAddingTexture(true)}
+                className="text-xs text-[#8aaa58] border border-dashed border-[#8aaa58] px-3 py-1 rounded-full"
+              >
+                ＋ 追加
+              </button>
+            )}
           </div>
         </div>
 

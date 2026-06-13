@@ -55,7 +55,7 @@ export default function PlantDetailModal() {
   if (!plant) return null;
 
   const displayName = plant.nickname ?? plant.name;
-  const isInvestigating = plant.name === null;
+  const isInvestigating = plant.name === null && plant.nickname === null;
   const badge = getBadge(plant.affectionLevel);
 
   async function handleToggleOshi() {

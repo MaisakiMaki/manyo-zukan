@@ -2,7 +2,7 @@
 
 import Image from 'next/image';
 import { useAppStore } from '@/store/appStore';
-import { dummyPlants } from '@/lib/dummyData';
+import { usePlants } from '@/hooks/usePlants';
 
 function formatDate(dateStr: string): string {
   const date = new Date(dateStr);
@@ -14,8 +14,9 @@ function formatDate(dateStr: string): string {
 
 export default function InvestigatingTab() {
   const openModal = useAppStore((s) => s.openModal);
+  const { plants } = usePlants();
 
-  const investigatingPlants = dummyPlants.filter((p) => p.name === null);
+  const investigatingPlants = plants.filter((p) => p.name === null && p.nickname === null);
 
   return (
     <div className="px-4 py-4">
