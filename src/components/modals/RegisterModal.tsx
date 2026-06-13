@@ -10,10 +10,14 @@ import { supabase } from '@/lib/supabase';
 const COLOR_OPTIONS = [
   { label: '白', bg: '#ffffff', border: '#ddeec0' },
   { label: '赤', bg: '#f87171', border: '#f87171' },
+  { label: 'オレンジ', bg: '#fb923c', border: '#fb923c' },
   { label: '黄', bg: '#fbbf24', border: '#fbbf24' },
+  { label: '緑', bg: '#4ade80', border: '#4ade80' },
+  { label: '青', bg: '#60a5fa', border: '#60a5fa' },
   { label: 'ピンク', bg: '#f9a8d4', border: '#f9a8d4' },
   { label: '紫', bg: '#c084fc', border: '#c084fc' },
-  { label: '緑', bg: '#4ade80', border: '#4ade80' },
+  { label: '茶', bg: '#92400e', border: '#92400e' },
+  { label: '黒', bg: '#1c1917', border: '#44403c' },
 ];
 
 const SMELL_OPTIONS = ['甘い香り', '草っぽい', '無臭'];
@@ -218,6 +222,9 @@ export default function RegisterModal() {
           className="hidden"
           onChange={handleFileChange}
         />
+        <p className="text-xs text-[#8aaa58] text-center -mt-3">
+          植物と周りの景色も一緒に撮ると、<br></br>後で場所を思い出しやすいです
+        </p>
 
         {/* ④ 愛称入力 */}
         <div className="space-y-1.5">
@@ -234,14 +241,14 @@ export default function RegisterModal() {
         {/* ⑤ 色の選択 */}
         <div className="space-y-2">
           <label className="text-[#1e3a0e] text-xs font-semibold">色</label>
-          <div className="flex gap-3">
+          <div className="flex flex-wrap gap-2">
             {COLOR_OPTIONS.map((color) => {
               const isSelected = selectedColor === color.label;
               return (
                 <button
                   key={color.label}
                   onClick={() => setSelectedColor(isSelected ? null : color.label)}
-                  className={`w-8 h-8 rounded-full shrink-0 transition-all ${
+                  className={`w-7 h-7 rounded-full shrink-0 transition-all ${
                     isSelected ? 'ring-2 ring-[#2d5016] ring-offset-1' : ''
                   }`}
                   style={{
