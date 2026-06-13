@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import Image from 'next/image';
 import { useAppStore } from '@/store/appStore';
 import BottomSheet from '@/components/ui/BottomSheet';
@@ -51,6 +51,24 @@ export default function RegisterModal() {
     const saved = localStorage.getItem('customTextures');
     return saved ? JSON.parse(saved) : [];
   });
+  const [location, setLocation] = useState<{ lat: number; lng: number } | null>(null);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    if (!useLocation) return;
+    if (!navigator.geolocation) return;
+
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+      },
+      (err) => {
+        console.warn('位置情報取得失敗:', err);
+        setLocation(null);
+      },
+      { enableHighAccuracy: true, timeout: 10000 }
+    );
+  }, [isOpen, useLocation]);
 
   function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -78,6 +96,7 @@ export default function RegisterModal() {
     setNewSmell('');
     setAddingTexture(false);
     setNewTexture('');
+    setLocation(null);
     closeModal();
   }
 
@@ -116,6 +135,8 @@ export default function RegisterModal() {
       affection_level: 1,
       is_public: isPublic,
       main_image_url: imageUrl,
+      latitude: useLocation && location ? location.lat : null,
+      longitude: useLocation && location ? location.lng : null,
     });
 
     if (error) {
@@ -412,6 +433,14 @@ export default function RegisterModal() {
             />
           </button>
         </div>
+
+        {useLocation && (
+          <p className="text-xs text-[#8aaa58] -mt-3">
+            {location
+              ? `📍 取得済み (${location.lat.toFixed(4)}, ${location.lng.toFixed(4)})`
+              : '📍 取得中...'}
+          </p>
+        )}
 
         {/* ⑩ ボタン行 */}
         <div className="flex gap-2 pt-1">
