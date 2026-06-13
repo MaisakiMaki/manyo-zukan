@@ -125,6 +125,15 @@ export default function GardenMode() {
         </div>
       </div>
 
+      {/* 植物登録ボタン */}
+      <button
+        onClick={() => openModal('register')}
+        className="fixed bottom-24 right-4 z-30 w-14 h-14 rounded-full flex items-center justify-center shadow-lg"
+        style={{ background: '#2d5016' }}
+      >
+        <span className="text-white text-2xl">＋</span>
+      </button>
+
     </div>
   );
 }
