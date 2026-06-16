@@ -7,12 +7,12 @@ export default function Header() {
   const openModal = useAppStore((s) => s.openModal);
 
   return (
-    <header className="flex items-center justify-between px-4 py-2 bg-white border-b border-[#ddeec0]">
+    <header className="flex items-center justify-between px-4 py-3 bg-white border-b border-[#ddeec0]">
       <Image
         src="/oshibana-logotype.png"
         alt="おしばな"
-        width={140}
-        height={34}
+        width={160}
+        height={40}
         className="object-contain"
       />
       <button
