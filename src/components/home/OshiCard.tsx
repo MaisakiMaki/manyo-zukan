@@ -14,7 +14,7 @@ export default function OshiCard({ plant }: Props) {
   const openModal = useAppStore((s) => s.openModal);
 
   const displayName = plant.nickname ?? plant.name ?? '調査中';
-  const isInvestigating = plant.name === null;
+  const isInvestigating = plant.name === null && plant.nickname === null;
 
   return (
     <div

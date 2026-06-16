@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 
@@ -41,13 +42,14 @@ export default function AuthPage() {
 
       {/* ロゴ */}
       <div className="text-center mb-8">
-        <h1
-          className="text-2xl text-[#1e3a0e]"
-          style={{ fontFamily: "'Shippori Mincho', serif" }}
-        >
-          万葉植物図鑑
-        </h1>
-        <p className="text-sm text-[#8aaa58] mt-1">自分だけの植物図鑑を育てよう</p>
+        <Image
+          src="/oshibana-logotype.png"
+          alt="おしばな"
+          width={240}
+          height={60}
+          className="object-contain"
+        />
+        <p className="text-sm text-[#8aaa58] mt-2">自分だけの推し花を見つけよう</p>
       </div>
 
       {/* タブ切替 */}
