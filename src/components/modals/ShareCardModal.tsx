@@ -50,23 +50,34 @@ export default function ShareCardModal() {
   const days = getDaysSince(plant.createdAt);
   const affectionPct = Math.min(100, (plant.affectionLevel / 10) * 100);
 
-  async function downloadImage() {
-    if (!cardRef.current) return;
-    const dataUrl = await toPng(cardRef.current, {
-      cacheBust: true,
-      pixelRatio: 2,
-      width: 360,
-    });
-    const link = document.createElement('a');
-    link.download = `${plant?.nickname ?? '植物'}の図鑑カード.png`;
-    link.href = dataUrl;
-    link.click();
-  }
-
   async function handleSave() {
+    if (!cardRef.current) return;
+    setSaveStatus('saving');
+
     try {
-      setSaveStatus('saving');
-      await downloadImage();
+      const dataUrl = await toPng(cardRef.current, {
+        cacheBust: true,
+        pixelRatio: 2,
+        width: 360,
+      });
+
+      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+
+      if (isIOS && navigator.share) {
+        const blob = await fetch(dataUrl).then(r => r.blob());
+        const file = new File(
+          [blob],
+          `${plant?.nickname ?? '植物'}の図鑑カード.png`,
+          { type: 'image/png' }
+        );
+        await navigator.share({ files: [file] });
+      } else {
+        const link = document.createElement('a');
+        link.download = `${plant?.nickname ?? '植物'}の図鑑カード.png`;
+        link.href = dataUrl;
+        link.click();
+      }
+
       setSaveStatus('done');
       setTimeout(() => setSaveStatus('idle'), 1500);
     } catch (err) {
@@ -75,24 +86,22 @@ export default function ShareCardModal() {
     }
   }
 
-  async function handleShareTo(platform: 'x' | 'instagram' | 'line') {
+  async function handleShare() {
     try {
-      await downloadImage();
-      setTimeout(() => {
-        if (platform === 'x') {
-          window.open(
-            'https://twitter.com/intent/tweet?text=' + encodeURIComponent('おしばなで出会った推し植物です🌿'),
-            '_blank'
-          );
-        } else if (platform === 'line') {
-          window.open(
-            'https://line.me/R/share?text=' + encodeURIComponent('おしばなで出会った推し植物です🌿'),
-            '_blank'
-          );
-        } else if (platform === 'instagram') {
-          window.open('instagram://', '_blank') || window.open('https://www.instagram.com', '_blank');
-        }
-      }, 500);
+      const shareUrl = 'https://manyo-zukan.vercel.app';
+      const shareText = `${plant?.nickname ?? '植物'}の変化を記録しています🌿\nおしばな - ${shareUrl}`;
+
+      if (navigator.share) {
+        await navigator.share({
+          title: 'おしばな',
+          text: shareText,
+        });
+      } else {
+        window.open(
+          'https://twitter.com/intent/tweet?text=' + encodeURIComponent(shareText),
+          '_blank'
+        );
+      }
     } catch (err) {
       console.error('share error:', err);
     }
@@ -222,17 +231,25 @@ export default function ShareCardModal() {
           </div>
         </div>
 
-        {/* 保存ボタン */}
-        <button
-          onClick={handleSave}
-          disabled={saveStatus === 'saving'}
-          className="w-full bg-[#f0f8e4] text-[#2d5016] text-sm py-3 rounded-xl font-medium border border-[#cde0b0] disabled:opacity-60"
-        >
-          {saveStatus === 'saving' ? '保存中...' :
-           saveStatus === 'done' ? '✅ 保存しました！' : '⬇️ 画像を保存'}
-        </button>
-        <p className="text-xs text-[#8aaa58] text-center -mt-2">
-          保存した画像をSNSでシェアしよう！
+        {/* ボタン */}
+        <div className="space-y-2">
+          <button
+            onClick={handleShare}
+            className="w-full bg-[#2d5016] text-white text-sm py-3 rounded-xl font-medium"
+          >
+            🔗 シェアする
+          </button>
+          <button
+            onClick={handleSave}
+            disabled={saveStatus === 'saving'}
+            className="w-full bg-[#f0f8e4] text-[#2d5016] text-sm py-3 rounded-xl font-medium border border-[#cde0b0] disabled:opacity-60"
+          >
+            {saveStatus === 'saving' ? '保存中...' :
+             saveStatus === 'done' ? '✅ 保存しました！' : '⬇️ 画像を保存'}
+          </button>
+        </div>
+        <p className="text-xs text-[#8aaa58] text-center">
+          iOSはシェアシートからも画像を保存できます
         </p>
 
         {/* 閉じるボタン */}
