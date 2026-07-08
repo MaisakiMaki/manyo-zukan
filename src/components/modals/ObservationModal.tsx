@@ -2,6 +2,7 @@
 
 import { useState, useRef } from 'react';
 import Image from 'next/image';
+import imageCompression from 'browser-image-compression';
 import { useAppStore } from '@/store/appStore';
 import BottomSheet from '@/components/ui/BottomSheet';
 import { supabase } from '@/lib/supabase';
@@ -34,11 +35,13 @@ export default function ObservationModal() {
   const [loading, setLoading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+  async function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
-    setSelectedFile(file);
-    setPreviewUrl(URL.createObjectURL(file));
+    const options = { maxSizeMB: 1, maxWidthOrHeight: 1920, useWebWorker: true };
+    const compressedFile = await imageCompression(file, options);
+    setSelectedFile(compressedFile);
+    setPreviewUrl(URL.createObjectURL(compressedFile));
   }
 
   function handleClose() {

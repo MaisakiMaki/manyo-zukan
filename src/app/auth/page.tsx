@@ -21,6 +21,12 @@ export default function AuthPage() {
     setLoading(true);
 
     try {
+      if (mode === 'signup' && !email.endsWith('@senshu-u.ac.jp')) {
+        setError('専修大学のメールアドレス（@senshu-u.ac.jp）で登録してください');
+        setLoading(false);
+        return;
+      }
+
       if (mode === 'login') {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;

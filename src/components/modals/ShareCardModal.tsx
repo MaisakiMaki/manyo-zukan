@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef } from 'react';
+import { useRef, useState } from 'react';
 import Image from 'next/image';
 import { toPng } from 'html-to-image';
 import { useAppStore } from '@/store/appStore';
@@ -33,6 +33,7 @@ export default function ShareCardModal() {
   const { observations } = useObservations(selectedPlantId);
 
   const cardRef = useRef<HTMLDivElement>(null);
+  const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'done'>('idle');
 
   const plant = selectedPlantId
     ? plants.find((p) => p.id === selectedPlantId) ?? null
@@ -49,39 +50,41 @@ export default function ShareCardModal() {
   const days = getDaysSince(plant.createdAt);
   const affectionPct = Math.min(100, (plant.affectionLevel / 10) * 100);
 
-  async function handleShare(type: 'share' | 'save') {
-    if (!cardRef.current) return;
+  async function saveImage(): Promise<string | null> {
+    if (!cardRef.current) return null;
+    const dataUrl = await toPng(cardRef.current, {
+      cacheBust: true,
+      pixelRatio: 2,
+      width: 360,
+    });
+    const link = document.createElement('a');
+    link.download = `${plant?.nickname ?? '植物'}の図鑑カード.png`;
+    link.href = dataUrl;
+    link.click();
+    return dataUrl;
+  }
 
+  async function handleSave() {
     try {
-      const dataUrl = await toPng(cardRef.current, {
-        cacheBust: true,
-        pixelRatio: 2,
-        width: 360,
-      });
+      setSaveStatus('saving');
+      await saveImage();
+      setSaveStatus('done');
+      setTimeout(() => setSaveStatus('idle'), 1500);
+    } catch (err) {
+      console.error('save error:', err);
+      setSaveStatus('idle');
+    }
+  }
 
-      if (type === 'save') {
-        const link = document.createElement('a');
-        link.download = `${plant?.nickname ?? '植物'}の図鑑カード.png`;
-        link.href = dataUrl;
-        link.click();
-        return;
-      }
-
-      const blob = await (await fetch(dataUrl)).blob();
-      const file = new File([blob], 'plant-card.png', { type: 'image/png' });
-
-      if (navigator.share && navigator.canShare({ files: [file] })) {
-        await navigator.share({
-          files: [file],
-          title: `${plant?.nickname ?? '植物'}の図鑑カード`,
-          text: '万葉植物図鑑で出会った推し植物です🌿',
-        });
-      } else {
-        const link = document.createElement('a');
-        link.download = 'plant-card.png';
-        link.href = dataUrl;
-        link.click();
-      }
+  async function handleShareTo(platform: 'x' | 'instagram' | 'line') {
+    try {
+      await saveImage();
+      const messages = {
+        x: '画像を保存しました！Xを開いて投稿してください🐦',
+        instagram: '画像を保存しました！Instagramを開いて投稿してください📸',
+        line: '画像を保存しました！LINEを開いて送ってください💬',
+      };
+      alert(messages[platform]);
     } catch (err) {
       console.error('share error:', err);
     }
@@ -206,7 +209,7 @@ export default function ShareCardModal() {
               className="text-right text-white/20 text-xs mt-3"
               style={{ fontFamily: "'Shippori Mincho', serif" }}
             >
-              万葉植物図鑑
+              おしばな
             </p>
           </div>
         </div>
@@ -214,29 +217,30 @@ export default function ShareCardModal() {
         {/* シェアボタングリッド */}
         <div className="grid grid-cols-2 gap-2">
           <button
-            onClick={() => handleShare('share')}
+            onClick={() => handleShareTo('x')}
             className="bg-black text-white text-sm py-3 rounded-xl font-medium"
           >
             𝕏 でシェア
           </button>
           <button
-            onClick={() => handleShare('share')}
+            onClick={() => handleShareTo('instagram')}
             className="text-white text-sm py-3 rounded-xl font-medium"
             style={{ background: 'linear-gradient(135deg, #f9a8d4, #fb923c)' }}
           >
             📸 Instagram
           </button>
           <button
-            onClick={() => handleShare('share')}
+            onClick={() => handleShareTo('line')}
             className="bg-[#06c755] text-white text-sm py-3 rounded-xl font-medium"
           >
             💬 LINE
           </button>
           <button
-            onClick={() => handleShare('save')}
-            className="bg-[#f0f8e4] text-[#2d5016] text-sm py-3 rounded-xl font-medium border border-[#cde0b0]"
+            onClick={handleSave}
+            disabled={saveStatus === 'saving'}
+            className="bg-[#f0f8e4] text-[#2d5016] text-sm py-3 rounded-xl font-medium border border-[#cde0b0] disabled:opacity-60"
           >
-            ⬇️ 保存
+            {saveStatus === 'saving' ? '保存中...' : saveStatus === 'done' ? '✅ 保存しました！' : '⬇️ 保存'}
           </button>
         </div>
 
