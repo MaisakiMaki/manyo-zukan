@@ -50,8 +50,8 @@ export default function ShareCardModal() {
   const days = getDaysSince(plant.createdAt);
   const affectionPct = Math.min(100, (plant.affectionLevel / 10) * 100);
 
-  async function saveImage(): Promise<string | null> {
-    if (!cardRef.current) return null;
+  async function downloadImage() {
+    if (!cardRef.current) return;
     const dataUrl = await toPng(cardRef.current, {
       cacheBust: true,
       pixelRatio: 2,
@@ -61,13 +61,12 @@ export default function ShareCardModal() {
     link.download = `${plant?.nickname ?? '植物'}の図鑑カード.png`;
     link.href = dataUrl;
     link.click();
-    return dataUrl;
   }
 
   async function handleSave() {
     try {
       setSaveStatus('saving');
-      await saveImage();
+      await downloadImage();
       setSaveStatus('done');
       setTimeout(() => setSaveStatus('idle'), 1500);
     } catch (err) {
@@ -78,13 +77,22 @@ export default function ShareCardModal() {
 
   async function handleShareTo(platform: 'x' | 'instagram' | 'line') {
     try {
-      await saveImage();
-      const messages = {
-        x: '画像を保存しました！Xを開いて投稿してください🐦',
-        instagram: '画像を保存しました！Instagramを開いて投稿してください📸',
-        line: '画像を保存しました！LINEを開いて送ってください💬',
-      };
-      alert(messages[platform]);
+      await downloadImage();
+      setTimeout(() => {
+        if (platform === 'x') {
+          window.open(
+            'https://twitter.com/intent/tweet?text=' + encodeURIComponent('おしばなで出会った推し植物です🌿'),
+            '_blank'
+          );
+        } else if (platform === 'line') {
+          window.open(
+            'https://line.me/R/share?text=' + encodeURIComponent('おしばなで出会った推し植物です🌿'),
+            '_blank'
+          );
+        } else if (platform === 'instagram') {
+          window.open('instagram://', '_blank') || window.open('https://www.instagram.com', '_blank');
+        }
+      }, 500);
     } catch (err) {
       console.error('share error:', err);
     }
