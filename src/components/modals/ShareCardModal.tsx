@@ -1,7 +1,6 @@
 'use client';
 
-import { useRef, useState } from 'react';
-import Image from 'next/image';
+import { useRef, useState, useEffect } from 'react';
 import { toPng } from 'html-to-image';
 import { useAppStore } from '@/store/appStore';
 import BottomSheet from '@/components/ui/BottomSheet';
@@ -34,15 +33,36 @@ export default function ShareCardModal() {
 
   const cardRef = useRef<HTMLDivElement>(null);
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'done'>('idle');
+  const [heroBase64, setHeroBase64] = useState<string | null>(null);
 
   const plant = selectedPlantId
     ? plants.find((p) => p.id === selectedPlantId) ?? null
     : null;
 
-  if (!plant) return null;
-
   const latestObs = observations[0] ?? null;
-  const heroImage = latestObs?.imageUrl ?? plant.mainImageUrl ?? null;
+  const heroImage = plant ? (latestObs?.imageUrl ?? plant.mainImageUrl ?? null) : null;
+
+  useEffect(() => {
+    if (!heroImage) return;
+
+    async function convertToBase64() {
+      try {
+        const response = await fetch(heroImage!);
+        const blob = await response.blob();
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          setHeroBase64(reader.result as string);
+        };
+        reader.readAsDataURL(blob);
+      } catch (err) {
+        console.error('画像変換エラー:', err);
+      }
+    }
+
+    convertToBase64();
+  }, [heroImage]);
+
+  if (!plant) return null;
 
   const displayName = plant.nickname ?? plant.name;
   const isInvestigating = plant.name === null && plant.nickname === null;
@@ -134,14 +154,12 @@ export default function ShareCardModal() {
         >
           {/* ヒーロー画像エリア */}
           <div className="relative w-full" style={{ height: 200 }}>
-            {heroImage ? (
-              <Image
-                src={heroImage}
+            {heroBase64 ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={heroBase64}
                 alt={displayName ?? '調査中'}
-                fill
-                className="object-cover"
-                sizes="384px"
-                crossOrigin="anonymous"
+                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
               />
             ) : (
               <div className="w-full h-full flex items-center justify-center bg-[#1a2e0a]">
