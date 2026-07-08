@@ -43,15 +43,20 @@ export default function ShareCardModal() {
   const heroImage = plant ? (latestObs?.imageUrl ?? plant.mainImageUrl ?? null) : null;
 
   useEffect(() => {
+    setHeroBase64(null);
     if (!heroImage) return;
+
+    let cancelled = false;
 
     async function convertToBase64() {
       try {
-        const response = await fetch(heroImage!);
+        const response = await fetch(heroImage + '?t=' + Date.now());
         const blob = await response.blob();
         const reader = new FileReader();
         reader.onloadend = () => {
-          setHeroBase64(reader.result as string);
+          if (!cancelled) {
+            setHeroBase64(reader.result as string);
+          }
         };
         reader.readAsDataURL(blob);
       } catch (err) {
@@ -60,6 +65,10 @@ export default function ShareCardModal() {
     }
 
     convertToBase64();
+
+    return () => {
+      cancelled = true;
+    };
   }, [heroImage]);
 
   if (!plant) return null;
