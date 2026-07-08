@@ -30,6 +30,7 @@ export default function ObservationModal() {
   const plantLabel = plant?.nickname ?? plant?.name ?? null;
 
   const [comment, setComment] = useState('');
+  const [isPublic, setIsPublic] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -46,6 +47,7 @@ export default function ObservationModal() {
 
   function handleClose() {
     setComment('');
+    setIsPublic(false);
     setSelectedFile(null);
     setPreviewUrl(null);
     setLoading(false);
@@ -78,6 +80,7 @@ export default function ObservationModal() {
       date: new Date().toISOString(),
       image_url: imageUrl,
       comment: comment || null,
+      is_public: isPublic,
     });
 
     if (!error) {
@@ -157,6 +160,26 @@ export default function ObservationModal() {
             </div>
           </div>
           <p className="text-[#c5dea0] text-xs text-center">自動で記録されます</p>
+        </div>
+
+        {/* ⑤-b 共有トグル */}
+        <div className="flex items-center justify-between py-1">
+          <div>
+            <span className="text-[#1e3a0e] text-sm">👥 みんなに共有する</span>
+            <p className="text-xs text-[#8aaa58] mt-0.5">写真とひとことがみんなに見えます</p>
+          </div>
+          <button
+            onClick={() => setIsPublic(!isPublic)}
+            className={`relative w-11 h-6 rounded-full transition-colors duration-200 ${
+              isPublic ? 'bg-[#2d5016]' : 'bg-[#ddeec0]'
+            }`}
+          >
+            <span
+              className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow-sm transition-transform duration-200 ${
+                isPublic ? 'translate-x-5' : 'translate-x-0'
+              }`}
+            />
+          </button>
         </div>
 
         {/* ⑥ ボタン行 */}

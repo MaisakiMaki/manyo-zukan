@@ -222,35 +222,18 @@ export default function ShareCardModal() {
           </div>
         </div>
 
-        {/* シェアボタングリッド */}
-        <div className="grid grid-cols-2 gap-2">
-          <button
-            onClick={() => handleShareTo('x')}
-            className="bg-black text-white text-sm py-3 rounded-xl font-medium"
-          >
-            𝕏 でシェア
-          </button>
-          <button
-            onClick={() => handleShareTo('instagram')}
-            className="text-white text-sm py-3 rounded-xl font-medium"
-            style={{ background: 'linear-gradient(135deg, #f9a8d4, #fb923c)' }}
-          >
-            📸 Instagram
-          </button>
-          <button
-            onClick={() => handleShareTo('line')}
-            className="bg-[#06c755] text-white text-sm py-3 rounded-xl font-medium"
-          >
-            💬 LINE
-          </button>
-          <button
-            onClick={handleSave}
-            disabled={saveStatus === 'saving'}
-            className="bg-[#f0f8e4] text-[#2d5016] text-sm py-3 rounded-xl font-medium border border-[#cde0b0] disabled:opacity-60"
-          >
-            {saveStatus === 'saving' ? '保存中...' : saveStatus === 'done' ? '✅ 保存しました！' : '⬇️ 保存'}
-          </button>
-        </div>
+        {/* 保存ボタン */}
+        <button
+          onClick={handleSave}
+          disabled={saveStatus === 'saving'}
+          className="w-full bg-[#f0f8e4] text-[#2d5016] text-sm py-3 rounded-xl font-medium border border-[#cde0b0] disabled:opacity-60"
+        >
+          {saveStatus === 'saving' ? '保存中...' :
+           saveStatus === 'done' ? '✅ 保存しました！' : '⬇️ 画像を保存'}
+        </button>
+        <p className="text-xs text-[#8aaa58] text-center -mt-2">
+          保存した画像をSNSでシェアしよう！
+        </p>
 
         {/* 閉じるボタン */}
         <button
