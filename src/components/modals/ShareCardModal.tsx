@@ -47,6 +47,7 @@ export default function ShareCardModal() {
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'done'>('idle');
   const [heroBase64, setHeroBase64] = useState<string | null>(null);
   const [heroGifUrl, setHeroGifUrl] = useState<string | null>(null);
+  const [heroGifBlob, setHeroGifBlob] = useState<Blob | null>(null);
   const [isGeneratingGif, setIsGeneratingGif] = useState(false);
   const [isCapturing, setIsCapturing] = useState(false);
 
@@ -160,6 +161,7 @@ export default function ShareCardModal() {
           if (!cancelled) {
             const url = URL.createObjectURL(blob);
             setHeroGifUrl(url);
+            setHeroGifBlob(blob);
             setIsGeneratingGif(false);
           }
         });
@@ -187,33 +189,37 @@ export default function ShareCardModal() {
   const affectionPct = Math.min(100, (plant.affectionLevel / 10) * 100);
 
   async function handleSave() {
-    if (!cardRef.current) return;
     setSaveStatus('saving');
-    // GIF→base64に一時切り替えしてキャプチャ
-    setIsCapturing(true);
-    await new Promise(resolve => setTimeout(resolve, 100));
 
     try {
-      const dataUrl = await toPng(cardRef.current, {
-        cacheBust: true,
-        pixelRatio: 2,
-        width: 360,
-      });
+      let blob: Blob;
+      let filename: string;
+
+      if (heroGifBlob) {
+        // GIFがある場合はGIFをそのまま保存
+        blob = heroGifBlob;
+        filename = `${plant?.nickname ?? '植物'}の図鑑カード.gif`;
+      } else {
+        // GIFがない場合はPNGでキャプチャ
+        if (!cardRef.current) return;
+        const dataUrl = await toPng(cardRef.current, {
+          cacheBust: true,
+          pixelRatio: 2,
+          width: 360,
+        });
+        blob = await fetch(dataUrl).then(r => r.blob());
+        filename = `${plant?.nickname ?? '植物'}の図鑑カード.png`;
+      }
 
       const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
 
       if (isIOS && navigator.share) {
-        const blob = await fetch(dataUrl).then(r => r.blob());
-        const file = new File(
-          [blob],
-          `${plant?.nickname ?? '植物'}の図鑑カード.png`,
-          { type: 'image/png' }
-        );
+        const file = new File([blob], filename, { type: blob.type });
         await navigator.share({ files: [file] });
       } else {
         const link = document.createElement('a');
-        link.download = `${plant?.nickname ?? '植物'}の図鑑カード.png`;
-        link.href = dataUrl;
+        link.download = filename;
+        link.href = URL.createObjectURL(blob);
         link.click();
       }
 
@@ -222,8 +228,6 @@ export default function ShareCardModal() {
     } catch (err) {
       console.error('save error:', err);
       setSaveStatus('idle');
-    } finally {
-      setIsCapturing(false);
     }
   }
 
