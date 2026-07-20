@@ -101,10 +101,18 @@ export default function ShareCardModal() {
       await waitForImagesLoaded(cardRef.current);
       await new Promise((resolve) => setTimeout(resolve, 300));
 
+      console.log('cardRef innerHTML length:', cardRef.current?.innerHTML.length);
+      console.log('img elements:', cardRef.current?.querySelectorAll('img').length);
+
       const dataUrl = await toPng(cardRef.current, {
         cacheBust: true,
         pixelRatio: 2,
         width: 360,
+        skipFonts: true,
+        imagePlaceholder: undefined,
+        fetchRequestInit: {
+          mode: 'cors',
+        },
       });
 
       const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
