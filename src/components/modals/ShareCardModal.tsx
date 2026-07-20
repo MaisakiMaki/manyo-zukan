@@ -80,11 +80,27 @@ export default function ShareCardModal() {
   const days = getDaysSince(plant.createdAt);
   const affectionPct = Math.min(100, (plant.affectionLevel / 10) * 100);
 
+  async function waitForImagesLoaded(element: HTMLElement) {
+    const images = Array.from(element.querySelectorAll('img'));
+    await Promise.all(
+      images.map((img) => {
+        if (img.complete) return Promise.resolve();
+        return new Promise((resolve) => {
+          img.onload = resolve;
+          img.onerror = resolve;
+        });
+      })
+    );
+  }
+
   async function handleSave() {
     if (!cardRef.current) return;
     setSaveStatus('saving');
 
     try {
+      await waitForImagesLoaded(cardRef.current);
+      await new Promise((resolve) => setTimeout(resolve, 300));
+
       const dataUrl = await toPng(cardRef.current, {
         cacheBust: true,
         pixelRatio: 2,
