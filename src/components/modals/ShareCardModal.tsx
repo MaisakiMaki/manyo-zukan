@@ -1,7 +1,7 @@
 'use client';
 
 import { useRef, useState, useEffect } from 'react';
-import { toPng } from 'html-to-image';
+import html2canvas from 'html2canvas';
 import { useAppStore } from '@/store/appStore';
 import BottomSheet from '@/components/ui/BottomSheet';
 import { usePlants } from '@/hooks/usePlants';
@@ -80,45 +80,26 @@ export default function ShareCardModal() {
   const days = getDaysSince(plant.createdAt);
   const affectionPct = Math.min(100, (plant.affectionLevel / 10) * 100);
 
-  async function waitForImagesLoaded(element: HTMLElement) {
-    const images = Array.from(element.querySelectorAll('img'));
-    await Promise.all(
-      images.map((img) => {
-        if (img.complete) return Promise.resolve();
-        return new Promise((resolve) => {
-          img.onload = resolve;
-          img.onerror = resolve;
-        });
-      })
-    );
-  }
-
   async function handleSave() {
     if (!cardRef.current) return;
     setSaveStatus('saving');
 
     try {
-      await waitForImagesLoaded(cardRef.current);
-      await new Promise((resolve) => setTimeout(resolve, 300));
-
-      console.log('cardRef innerHTML length:', cardRef.current?.innerHTML.length);
-      console.log('img elements:', cardRef.current?.querySelectorAll('img').length);
-
-      const dataUrl = await toPng(cardRef.current, {
-        cacheBust: true,
-        pixelRatio: 2,
+      const canvas = await html2canvas(cardRef.current, {
+        useCORS: true,
+        allowTaint: false,
+        backgroundColor: null,
+        scale: 2,
         width: 360,
-        skipFonts: true,
-        imagePlaceholder: undefined,
-        fetchRequestInit: {
-          mode: 'cors',
-        },
       });
+
+      const dataUrl = canvas.toDataURL('image/png');
 
       const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
 
       if (isIOS && navigator.share) {
-        const blob = await fetch(dataUrl).then(r => r.blob());
+        const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, 'image/png'));
+        if (!blob) throw new Error('blob変換に失敗しました');
         const file = new File(
           [blob],
           `${plant?.nickname ?? '植物'}の図鑑カード.png`,
@@ -188,9 +169,6 @@ export default function ShareCardModal() {
         >
           {/* ヒーロー画像エリア */}
           <div className="relative w-full" style={{ height: 200 }}>
-            <div style={{ position: 'absolute', top: 0, left: 0, zIndex: 999, background: 'yellow', color: 'black', fontSize: 8, padding: 2 }}>
-              heroImage: {heroImage ? 'あり' : 'なし'} / heroBase64: {heroBase64 ? `あり(${heroBase64.length})` : 'なし'}
-            </div>
             {heroBase64 && !heroBase64.startsWith('ERROR:') ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img
