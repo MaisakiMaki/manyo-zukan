@@ -196,7 +196,7 @@ export default function ShareCardModal() {
             {/* 画像上の名前・バッジ */}
             <div className="absolute bottom-3 left-4 right-4">
               {isInvestigating ? (
-                <p className="text-white/60 text-base italic">調査中</p>
+                <p className="text-base italic" style={{ color: 'rgba(255,255,255,0.6)' }}>調査中</p>
               ) : (
                 <p
                   className="text-white text-xl font-semibold leading-tight"
@@ -206,11 +206,11 @@ export default function ShareCardModal() {
                 </p>
               )}
               {plant.scientificName && (
-                <p className="text-white/50 text-xs mt-0.5">{plant.scientificName}</p>
+                <p className="text-xs mt-0.5" style={{ color: 'rgba(255,255,255,0.5)' }}>{plant.scientificName}</p>
               )}
               <span
-                className="inline-block mt-1 bg-white/20 text-white/90 text-xs rounded-full"
-                style={{ padding: '2px 8px', whiteSpace: 'nowrap' }}
+                className="inline-block mt-1 text-xs rounded-full"
+                style={{ padding: '2px 8px', whiteSpace: 'nowrap', backgroundColor: 'rgba(255,255,255,0.2)', color: 'rgba(255,255,255,0.9)' }}
               >
                 {badge.label}
               </span>
@@ -222,13 +222,13 @@ export default function ShareCardModal() {
             {/* 愛情度バー */}
             <div className="mb-3">
               <div className="flex items-center justify-between mb-1">
-                <p className="text-white/50 text-xs">愛情度</p>
-                <p className="text-white/70 text-xs">{plant.affectionLevel} / 10</p>
+                <p className="text-xs" style={{ color: 'rgba(255,255,255,0.5)' }}>愛情度</p>
+                <p className="text-xs" style={{ color: 'rgba(255,255,255,0.7)' }}>{plant.affectionLevel} / 10</p>
               </div>
-              <div className="w-full h-1.5 rounded-full bg-white/15">
+              <div className="w-full h-1.5 rounded-full" style={{ backgroundColor: 'rgba(255,255,255,0.15)' }}>
                 <div
-                  className="h-full rounded-full bg-white/60"
-                  style={{ width: `${affectionPct}%` }}
+                  className="h-full rounded-full"
+                  style={{ width: `${affectionPct}%`, backgroundColor: 'rgba(255,255,255,0.6)' }}
                 />
               </div>
             </div>
@@ -236,17 +236,17 @@ export default function ShareCardModal() {
             {/* タグ行 */}
             <div className="flex gap-1.5 flex-wrap">
               {plant.color && (
-                <span className="bg-white/15 text-white/80 text-[11px] px-2 py-0.5 rounded-full">
+                <span className="text-[11px] px-2 py-0.5 rounded-full" style={{ backgroundColor: 'rgba(255,255,255,0.15)', color: 'rgba(255,255,255,0.8)' }}>
                   {plant.color}
                 </span>
               )}
               {plant.smell && (
-                <span className="bg-white/15 text-white/80 text-[11px] px-2 py-0.5 rounded-full">
+                <span className="text-[11px] px-2 py-0.5 rounded-full" style={{ backgroundColor: 'rgba(255,255,255,0.15)', color: 'rgba(255,255,255,0.8)' }}>
                   {plant.smell}
                 </span>
               )}
               {plant.texture && (
-                <span className="bg-white/15 text-white/80 text-[11px] px-2 py-0.5 rounded-full">
+                <span className="text-[11px] px-2 py-0.5 rounded-full" style={{ backgroundColor: 'rgba(255,255,255,0.15)', color: 'rgba(255,255,255,0.8)' }}>
                   {plant.texture}
                 </span>
               )}
@@ -260,8 +260,8 @@ export default function ShareCardModal() {
 
             {/* ウォーターマーク */}
             <p
-              className="text-right text-white/20 text-xs mt-3"
-              style={{ fontFamily: "'Shippori Mincho', serif" }}
+              className="text-right text-xs mt-3"
+              style={{ color: 'rgba(255,255,255,0.2)', fontFamily: "'Shippori Mincho', serif" }}
             >
               おしばな
             </p>
