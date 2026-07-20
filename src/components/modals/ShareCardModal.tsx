@@ -2,8 +2,6 @@
 
 import { useRef, useState, useEffect } from 'react';
 import { toPng } from 'html-to-image';
-// @ts-expect-error gif.js has no type definitions
-import GIF from 'gif.js';
 import { useAppStore } from '@/store/appStore';
 import BottomSheet from '@/components/ui/BottomSheet';
 import { usePlants } from '@/hooks/usePlants';
@@ -23,16 +21,6 @@ function getDaysSince(dateStr: string): number {
   return Math.max(1, Math.floor(diff / (1000 * 60 * 60 * 24)) + 1);
 }
 
-function loadImage(src: string): Promise<HTMLImageElement> {
-  return new Promise((resolve, reject) => {
-    const img = new window.Image();
-    img.crossOrigin = 'anonymous';
-    img.onload = () => resolve(img);
-    img.onerror = reject;
-    img.src = src;
-  });
-}
-
 export default function ShareCardModal() {
   const activeModal = useAppStore((s) => s.activeModal);
   const selectedPlantId = useAppStore((s) => s.selectedPlantId);
@@ -46,25 +34,14 @@ export default function ShareCardModal() {
   const cardRef = useRef<HTMLDivElement>(null);
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'done'>('idle');
   const [heroBase64, setHeroBase64] = useState<string | null>(null);
-  const [heroGifUrl, setHeroGifUrl] = useState<string | null>(null);
-  const [heroGifBlob, setHeroGifBlob] = useState<Blob | null>(null);
-  const [isGeneratingGif, setIsGeneratingGif] = useState(false);
-  const [isCapturing, setIsCapturing] = useState(false);
 
   const plant = selectedPlantId
     ? plants.find((p) => p.id === selectedPlantId) ?? null
     : null;
 
-  // base64変換用（最新写真またはmain_image_url）
   const latestObs = observations[0] ?? null;
   const heroImage = plant ? (latestObs?.imageUrl ?? plant.mainImageUrl ?? null) : null;
 
-  // GIF用：最新観察写真 ↔ 登録時メイン写真
-  const latestImageUrl = latestObs?.imageUrl ?? null;
-  const firstImageUrl = plant?.mainImageUrl ?? null;
-  const canMakeGif = !!(latestImageUrl && firstImageUrl && latestImageUrl !== firstImageUrl);
-
-  // 最新写真をbase64変換（保存用フォールバック）
   useEffect(() => {
     setHeroBase64(null);
     if (!heroImage) return;
@@ -84,6 +61,9 @@ export default function ShareCardModal() {
         reader.readAsDataURL(blob);
       } catch (err) {
         console.error('画像変換エラー:', err);
+        if (!cancelled) {
+          setHeroBase64('ERROR:' + (err instanceof Error ? err.message : String(err)));
+        }
       }
     }
 
@@ -91,94 +71,6 @@ export default function ShareCardModal() {
 
     return () => { cancelled = true; };
   }, [heroImage]);
-
-  // GIF生成（最初と最新の観察記録が異なる場合）
-  useEffect(() => {
-    if (!canMakeGif || !latestImageUrl || !firstImageUrl) return;
-
-    let cancelled = false;
-    setHeroGifUrl(null);
-    setIsGeneratingGif(true);
-
-    async function generateGif() {
-      try {
-        // img1 = 最新の観察記録の写真（最初に表示）
-        // img2 = 登録時のメイン写真（次に表示）
-        const img1 = await loadImage(latestImageUrl!);
-        const img2 = await loadImage(firstImageUrl!);
-
-        const canvas = document.createElement('canvas');
-        canvas.width = 480;
-        canvas.height = 267;
-        const ctx = canvas.getContext('2d')!;
-
-        const gif = new GIF({
-          workers: 2,
-          quality: 5,
-          width: 480,
-          height: 267,
-          workerScript: '/gif.worker.js',
-          repeat: 0,
-          dither: 'FloydSteinberg',
-        });
-
-        const fadeSteps = 8;
-
-        function drawCrossfade(from: HTMLImageElement, to: HTMLImageElement, alpha: number) {
-          ctx.clearRect(0, 0, 480, 267);
-          ctx.globalAlpha = 1 - alpha;
-          ctx.drawImage(from, 0, 0, 480, 267);
-          ctx.globalAlpha = alpha;
-          ctx.drawImage(to, 0, 0, 480, 267);
-          ctx.globalAlpha = 1;
-        }
-
-        // フレーム1：最新の写真を静止表示
-        ctx.clearRect(0, 0, 480, 267);
-        ctx.globalAlpha = 1;
-        ctx.drawImage(img1, 0, 0, 480, 267);
-        gif.addFrame(ctx, { copy: true, delay: 1000 });
-
-        // 最新 → 登録時 クロスフェード
-        for (let i = 1; i <= fadeSteps; i++) {
-          drawCrossfade(img1, img2, i / fadeSteps);
-          gif.addFrame(ctx, { copy: true, delay: 80 });
-        }
-
-        // フレーム：登録時の写真を静止表示
-        ctx.clearRect(0, 0, 480, 267);
-        ctx.globalAlpha = 1;
-        ctx.drawImage(img2, 0, 0, 480, 267);
-        gif.addFrame(ctx, { copy: true, delay: 1500 });
-
-        // 登録時 → 最新 クロスフェード（戻り）
-        for (let i = 1; i <= fadeSteps; i++) {
-          drawCrossfade(img2, img1, i / fadeSteps);
-          gif.addFrame(ctx, { copy: true, delay: 80 });
-        }
-
-        gif.on('finished', (blob: Blob) => {
-          if (!cancelled) {
-            const url = URL.createObjectURL(blob);
-            setHeroGifUrl(url);
-            setHeroGifBlob(blob);
-            setIsGeneratingGif(false);
-          }
-        });
-
-        gif.render();
-      } catch (err) {
-        console.error('GIF生成エラー:', err);
-        if (!cancelled) {
-          setIsGeneratingGif(false);
-        }
-      }
-    }
-
-    generateGif();
-
-    return () => { cancelled = true; };
-  }, [canMakeGif, latestImageUrl, firstImageUrl]); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (!plant) return null;
 
@@ -189,37 +81,30 @@ export default function ShareCardModal() {
   const affectionPct = Math.min(100, (plant.affectionLevel / 10) * 100);
 
   async function handleSave() {
+    if (!cardRef.current) return;
     setSaveStatus('saving');
 
     try {
-      let blob: Blob;
-      let filename: string;
-
-      if (heroGifBlob) {
-        // GIFがある場合はGIFをそのまま保存
-        blob = heroGifBlob;
-        filename = `${plant?.nickname ?? '植物'}の図鑑カード.gif`;
-      } else {
-        // GIFがない場合はPNGでキャプチャ
-        if (!cardRef.current) return;
-        const dataUrl = await toPng(cardRef.current, {
-          cacheBust: true,
-          pixelRatio: 2,
-          width: 360,
-        });
-        blob = await fetch(dataUrl).then(r => r.blob());
-        filename = `${plant?.nickname ?? '植物'}の図鑑カード.png`;
-      }
+      const dataUrl = await toPng(cardRef.current, {
+        cacheBust: true,
+        pixelRatio: 2,
+        width: 360,
+      });
 
       const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
 
       if (isIOS && navigator.share) {
-        const file = new File([blob], filename, { type: blob.type });
+        const blob = await fetch(dataUrl).then(r => r.blob());
+        const file = new File(
+          [blob],
+          `${plant?.nickname ?? '植物'}の図鑑カード.png`,
+          { type: 'image/png' }
+        );
         await navigator.share({ files: [file] });
       } else {
         const link = document.createElement('a');
-        link.download = filename;
-        link.href = URL.createObjectURL(blob);
+        link.download = `${plant?.nickname ?? '植物'}の図鑑カード.png`;
+        link.href = dataUrl;
         link.click();
       }
 
@@ -279,24 +164,17 @@ export default function ShareCardModal() {
         >
           {/* ヒーロー画像エリア */}
           <div className="relative w-full" style={{ height: 200 }}>
-            {(!isCapturing && heroGifUrl) ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={heroGifUrl}
-                alt={displayName ?? '調査中'}
-                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-              />
-            ) : (!isCapturing && isGeneratingGif) ? (
-              <div className="w-full h-full flex items-center justify-center bg-[#1a2e0a]">
-                <span className="text-white/50 text-sm">GIF生成中...</span>
-              </div>
-            ) : heroBase64 ? (
+            {heroBase64 && !heroBase64.startsWith('ERROR:') ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img
                 src={heroBase64}
                 alt={displayName ?? '調査中'}
                 style={{ width: '100%', height: '100%', objectFit: 'cover' }}
               />
+            ) : heroBase64?.startsWith('ERROR:') ? (
+              <div className="w-full h-full flex items-center justify-center bg-red-900 p-4">
+                <span className="text-white text-xs text-center">{heroBase64}</span>
+              </div>
             ) : (
               <div className="w-full h-full flex items-center justify-center bg-[#1a2e0a]">
                 <span className="text-6xl">🌿</span>
