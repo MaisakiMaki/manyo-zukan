@@ -164,6 +164,9 @@ export default function ShareCardModal() {
         >
           {/* ヒーロー画像エリア */}
           <div className="relative w-full" style={{ height: 200 }}>
+            <div style={{ position: 'absolute', top: 0, left: 0, zIndex: 999, background: 'yellow', color: 'black', fontSize: 8, padding: 2 }}>
+              heroImage: {heroImage ? 'あり' : 'なし'} / heroBase64: {heroBase64 ? `あり(${heroBase64.length})` : 'なし'}
+            </div>
             {heroBase64 && !heroBase64.startsWith('ERROR:') ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img
