@@ -1,7 +1,7 @@
 'use client';
 
 import { useRef, useState, useEffect } from 'react';
-import html2canvas from 'html2canvas';
+import html2canvas from 'html2canvas-pro';
 import { useAppStore } from '@/store/appStore';
 import BottomSheet from '@/components/ui/BottomSheet';
 import { usePlants } from '@/hooks/usePlants';
