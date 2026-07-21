@@ -1,10 +1,52 @@
 'use client';
 
 import { useAppStore } from '@/store/appStore';
+import { usePlants } from '@/hooks/usePlants';
+import { useObservationsAll } from '@/hooks/useObservationsAll';
 
 export default function ForestTab() {
   const isInGarden = useAppStore((s) => s.isInGarden);
   const setIsInGarden = useAppStore((s) => s.setIsInGarden);
+
+  const { plants } = usePlants();
+  const plantIds = plants.map((p) => p.id);
+  const { observations } = useObservationsAll(plantIds);
+
+  async function handleNotifyDemo() {
+    if (!('Notification' in window)) {
+      alert('このブラウザは通知に対応していません');
+      return;
+    }
+
+    let permission = Notification.permission;
+    if (permission === 'default') {
+      permission = await Notification.requestPermission();
+    }
+
+    if (permission !== 'granted') {
+      alert('通知が許可されていません');
+      return;
+    }
+
+    const oshiPlant = plants.find((p) => p.isOshi);
+    if (!oshiPlant) {
+      alert('推し植物が設定されていません');
+      return;
+    }
+
+    const latestObs = observations
+      .filter((o) => o.plantId === oshiPlant.id)
+      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())[0];
+
+    const imageUrl = latestObs?.imageUrl ?? oshiPlant.mainImageUrl;
+
+    new Notification('おしばな', {
+      body: '',
+      icon: imageUrl ?? undefined,
+      image: imageUrl ?? undefined,
+      silent: true,
+    });
+  }
   return (
     <div className="px-4 py-4 space-y-4">
 
@@ -163,6 +205,22 @@ export default function ForestTab() {
             </div>
           ))}
         </div>
+      </div>
+
+      {/* 通知デモ */}
+      <div className="bg-white rounded-2xl p-4">
+        <p className="text-[#1e3a0e] text-sm font-semibold mb-2">
+          🔔 推しからのお知らせ（デモ）
+        </p>
+        <p className="text-xs text-[#8aaa58] mb-3">
+          通知を許可すると、推し植物の写真が届きます
+        </p>
+        <button
+          onClick={handleNotifyDemo}
+          className="w-full border border-[#2d5016] text-[#2d5016] text-sm py-2.5 rounded-full font-medium"
+        >
+          今すぐ届けてみる
+        </button>
       </div>
 
       {/* 🧪 開発用テストトグル */}
