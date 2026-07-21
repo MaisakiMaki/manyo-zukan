@@ -43,8 +43,9 @@ export default function ForestTab() {
     new Notification('おしばな', {
       body: '',
       icon: imageUrl ?? undefined,
-      image: imageUrl ?? undefined,
       silent: true,
+      // @ts-expect-error imageはNotificationOptionsの型定義にないが実際には使えるブラウザがある
+      image: imageUrl ?? undefined,
     });
   }
   return (
