@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import { supabase } from '@/lib/supabase';
+import { useAppStore } from '@/store/appStore';
 
 type PublicObservation = {
   id: string;
@@ -30,8 +31,11 @@ function getTimeAgo(dateStr: string): string {
 export default function SocialTab() {
   const [posts, setPosts] = useState<PublicObservation[]>([]);
   const [loading, setLoading] = useState(true);
+  const activeTab = useAppStore((s) => s.activeTab);
 
   useEffect(() => {
+    if (activeTab !== 'social') return;
+
     async function fetchPosts() {
       const { data, error } = await supabase
         .from('observation_records')
@@ -57,7 +61,7 @@ export default function SocialTab() {
     }
 
     fetchPosts();
-  }, []);
+  }, [activeTab]);
 
   if (loading) {
     return (
